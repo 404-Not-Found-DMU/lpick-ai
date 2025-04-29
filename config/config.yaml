@@ -1,0 +1,6 @@
+data:
+  raw: data/raw
+  processed: data/processed
+model:
+  checkpoint: models/checkpoints
+  saved_model: models/saved_models
