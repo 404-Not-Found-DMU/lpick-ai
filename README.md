@@ -26,6 +26,9 @@ LP 음반(레코드판) 이미지를 검색하고, 텍스트를 기반으로 검
 
 ## 📁 프로젝트 폴더 구조
 
+<details>
+<summary>클릭하여 펼치기</summary>
+
 ```plaintext
 📦lpick-ai
  ┣ 📂.git
@@ -127,43 +130,48 @@ LP 음반(레코드판) 이미지를 검색하고, 텍스트를 기반으로 검
  ┣ 📜README.md
  ┣ 📜environment.yml
  ┗ 📜requirements.txt
+```
+
+</details>
 
 ---
 
 ## 🚀 전체 진행 체크리스트
 
-- [ ] **1단계: 가상환경(venv) 생성 및 세팅**
-  - `python -m venv venv`로 프로젝트 가상환경 생성
-- [ ] **2단계: 가상환경 활성화 및 pip 업그레이드**
-  - `source venv/bin/activate` 및 `pip install --upgrade pip`
-- [ ] **3단계: 필수 패키지 설치**
-  - torch, torchvision, opencv-python, faiss-cpu 등 설치
-- [ ] **4단계: requirements.txt 생성**
-  - `pip freeze > requirements.txt`로 패키지 목록 저장
-- [ ] **5단계: .gitignore 파일 작성 및 최적화**
-  - venv, 로그파일, 모델결과물, 개인설정 등 제외 처리
-- [ ] **6단계: develop 브랜치 생성 및 Git 세팅**
-  - main → develop 분기, 작업 브랜치 전략 설정
-- [ ] **7단계: config.yaml 파일 작성**
-  - 데이터 경로, 모델 경로 등 설정 파일 구성
-- [ ] **8단계: EDA.ipynb 작성 및 탐색적 데이터 분석**
-  - 이미지/텍스트 수 확인, 샘플 시각화, 깨진 파일 검출
+- [x] **1단계: 가상환경(venv) 생성 및 세팅**
+- [x] **2단계: 가상환경 활성화 및 pip 업그레이드**
+- [x] **3단계: 필수 패키지 설치**
+- [x] **4단계: requirements.txt 생성**
+- [x] **5단계: .gitignore 파일 작성 및 최적화**
+- [x] **6단계: develop 브랜치 생성 및 Git 세팅**
+- [x] **7단계: config.yaml 파일 작성**
+- [x] **8단계: EDA.ipynb 작성 및 탐색적 데이터 분석**
 - [ ] **9단계: 데이터 전처리 (Preprocessing)**
-  - 이미지 리사이징, 정규화, 텍스트 정제 등
 - [ ] **10단계: 특징 추출 (Feature Extraction)**
-  - CLIP, ResNet, DINOv2 등을 활용한 임베딩 벡터 추출
 - [ ] **11단계: 모델 학습 (Training)**
-  - 학습 및 필요시 파인튜닝 진행
 - [ ] **12단계: 모델 저장 및 추론(Inference) 코드 작성**
-  - 학습된 모델을 저장하고 Inference API 준비
 - [ ] **13단계: FastAPI 서버 구축**
-  - 사용자 요청을 처리할 API 서버 구축
 - [ ] **14단계: 전체 통합 테스트**
-  - 데이터 → 모델 → 서버 → 결과까지 전체 연동 점검
 
 ---
 
 ## 🧠 전체 개발 흐름 요약
+
+```
+EDA 완료 ✅
+↓
+데이터 전처리
+↓
+특징 추출
+↓
+모델 학습
+↓
+모델 저장 및 추론
+↓
+FastAPI 서버 구축
+↓
+전체 통합 테스트
+```
 
 ---
 
@@ -177,9 +185,8 @@ LP 음반(레코드판) 이미지를 검색하고, 텍스트를 기반으로 검
 
 ---
 
-# 🏁 최종 목표
+## 🏁 최종 목표
 
 **LP 음반 검색 AI 시스템 구축**
 
-- **FastAPI 서버를 통해 사용자 요청에 대해 빠르게 검색 결과를 반환하는 서비스 제공**
-```
+- FastAPI 서버를 통해 사용자 요청에 대해 빠르게 검색 결과를 반환하는 서비스 제공
