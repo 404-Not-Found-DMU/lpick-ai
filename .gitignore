@@ -172,3 +172,42 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# --------------------------------------------
+# 추가 (lpick-ai 프로젝트 맞춤 설정)
+# --------------------------------------------
+
+# VSCode 개인 설정 파일 무시
+.vscode/
+
+# Jupyter Notebook nbconvert 출력 디렉토리 무시
+nbconvert/
+
+# 프로젝트 실행 중 생성되는 로그 디렉토리 무시
+logs/
+
+# 민감한 환경 변수 파일 무시
+.env
+
+# SQLite 데이터베이스 파일 무시
+*.sqlite3
+instance/
+*.log
+
+# 딥러닝 모델 저장 파일 무시 (PyTorch, TensorFlow 등)
+*.pth
+*.ckpt
+*.pt
+*.h5
+
+# 모델 학습 결과 저장 경로 무시
+models/checkpoints/
+models/saved_models/
+
+# 전처리된 데이터 및 외부 데이터 무시
+data/processed/
+data/external/
+
+# Docker 빌드 산출물 무시
+*.dockerfile
+docker-compose.override.yml
