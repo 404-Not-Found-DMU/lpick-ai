@@ -2,31 +2,30 @@
 # data/scripts/download_discogs_albums.py
 
 import os
+import argparse
 import time
-import csv
 import logging
+import csv
 import re
 from dotenv import load_dotenv
 import requests
 
-# 1) .env 로드
-env_path = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', '..', '.env')
-)
-load_dotenv(env_path)
+# 1) .env 로드 (프로젝트 루트의 .env)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ENV_PATH = os.path.join(BASE_DIR, '..', '..', '.env')
+load_dotenv(ENV_PATH)
 
 # 2) 폴더 구조 설정
-RAW_DIR      = os.path.join("data", "raw")
-DISCOGS_DIR  = os.path.join(RAW_DIR, "discogs")
-CSV_DIR      = os.path.join(RAW_DIR, "csv")
-LOG_DIR      = os.path.join(RAW_DIR, "logs")
+RAW_DIR     = os.path.join(BASE_DIR, '..', '..', 'data', 'raw')
+DISCOGS_DIR = os.path.join(RAW_DIR, 'discogs')
+CSV_DIR     = os.path.join(RAW_DIR, 'csv')
+LOG_DIR     = os.path.join(RAW_DIR, 'logs')
 for d in (DISCOGS_DIR, CSV_DIR, LOG_DIR):
     os.makedirs(d, exist_ok=True)
 
-# 3) 경로 설정
-DOWNLOAD_DIR = DISCOGS_DIR
-CSV_PATH     = os.path.join(CSV_DIR, "discogs_albums.csv")
-LOG_PATH     = os.path.join(LOG_DIR, "download_discogs_albums.log")
+# 3) 파일 경로 설정
+CSV_PATH = os.path.join(CSV_DIR, 'discogs_albums.csv')
+LOG_PATH = os.path.join(LOG_DIR, 'download_discogs_albums.log')
 
 # 4) 로깅 설정
 logging.basicConfig(
@@ -40,12 +39,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.info(f"Logging to {LOG_PATH} and CSV to {CSV_PATH}")
 
-# 5) Consumer key/secret 로드
-CONSUMER_KEY    = os.getenv('DISCOGS_CONSUMER_KEY')
-CONSUMER_SECRET = os.getenv('DISCOGS_CONSUMER_SECRET')
-if not CONSUMER_KEY or not CONSUMER_SECRET:
-    logger.error("DISCOGS_CONSUMER_KEY 또는 DISCOGS_CONSUMER_SECRET이 설정되지 않았습니다. .env를 확인하세요.")
-    exit(1)
+# 5) 환경변수 로드
+KEY    = os.getenv('DISCOGS_CONSUMER_KEY')
+SECRET = os.getenv('DISCOGS_CONSUMER_SECRET')
+UA     = 'LpickAI/0.1'
 
 # 6) 검색 대상 목록
 ALBUM_QUERIES = [
@@ -54,105 +51,141 @@ ALBUM_QUERIES = [
     # … 추가 항목 …
 ]
 
-# 7) Helper 함수
+# 7) 파일명 안전화 유틸
+
 def sanitize_title(title: str) -> str:
-    """앨범 제목을 파일명으로 쓸 수 있도록 안전하게 변환"""
     safe = re.sub(r'[\\/*?:"<>|]', '', title)
-    safe = safe.strip().replace(' ', '_')
-    return safe or 'untitled'
+    return safe.strip().replace(' ', '_') or 'untitled'
 
-# 8) Discogs API 호출 함수
-def search_album(artist: str, album: str) -> list:
-    params = {
-        'q':        f"{artist} {album}",
-        'type':     'release',
-        'per_page': 5,
-        'page':     1,
-        'key':      CONSUMER_KEY,
-        'secret':   CONSUMER_SECRET
-    }
-    headers = {'User-Agent': 'LpickAI/0.1'}
-    resp = requests.get('https://api.discogs.com/database/search', params=params, headers=headers)
-    resp.raise_for_status()
-    return resp.json().get('results', [])
+# 8) 이미지 다운로드 함수
 
-def fetch_release(release_id: int) -> dict:
-    headers = {'User-Agent': 'LpickAI/0.1'}
-    resp = requests.get(f'https://api.discogs.com/releases/{release_id}', headers=headers)
-    resp.raise_for_status()
-    return resp.json()
-
-# 9) 이미지 다운로드 함수
 def download_image(url: str, dest: str):
-    headers = {
-        'User-Agent': 'LpickAI/0.1',
-        'Referer': 'https://www.discogs.com/'
-    }
+    headers = {'User-Agent': UA, 'Referer': 'https://www.discogs.com/'}
     r = requests.get(url, headers=headers, stream=True)
     r.raise_for_status()
     with open(dest, 'wb') as f:
         for chunk in r.iter_content(1024):
             f.write(chunk)
 
-# 10) 메인 로직
+# 9) REST API 방식 + 페이징 처리 + 전역 카운터 + 이미지 제한
 
-def main():
-    # CSV 파일 열기 및 헤더 작성
-    logger.info("Opening CSV file for writing...")
-    with open(CSV_PATH, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow([
-            'artist','album','release_id','title','year','genres','styles','image_url','image_file'
-        ])
+def download_with_rest(query: str, dest_folder: str, csv_writer, csvfile):
+    headers = {'User-Agent': UA}
+    MAX_IMAGES = 50
 
-        for q in ALBUM_QUERIES:
-            artist, album = q['artist'], q['album']
-            logger.info(f"Searching Discogs: {artist} – {album}")
-            try:
-                results = search_album(artist, album)
-            except Exception as e:
-                logger.error(f"Search failed for {artist} – {album}: {e}")
-                continue
+    # 첫 요청: 전체 페이지 수 조회
+    params = {
+        'q':        query,
+        'type':     'release',
+        'per_page': 100,
+        'page':     1,
+        'key':      KEY,
+        'secret':   SECRET
+    }
+    r = requests.get('https://api.discogs.com/database/search', params=params, headers=headers)
+    r.raise_for_status()
+    total_pages = r.json().get('pagination', {}).get('pages', 1)
 
-            for res in results:
-                rid     = res['id']
-                release = fetch_release(rid)
+    seen_urls = set()
+    image_counter = 0
 
-                title  = release.get('title', '')
-                year   = release.get('year', '')
-                genres = ';'.join(release.get('genres', []))
-                styles = ';'.join(release.get('styles', []))
-                images = release.get('images', [])
+    for page in range(1, total_pages + 1):
+        logger.info(f"Searching page {page}/{total_pages} for '{query}'")
+        params['page'] = page
+        resp = requests.get('https://api.discogs.com/database/search', params=params, headers=headers)
+        resp.raise_for_status()
 
-                # 제목 안전화
-                base_name = sanitize_title(title or str(rid))
+        for result in resp.json().get('results', []):
+            rid = result.get('id')
+            # 상세 조회
+            rel_resp = requests.get(f'https://api.discogs.com/releases/{rid}', headers=headers)
+            rel_resp.raise_for_status()
+            rel = rel_resp.json()
 
-                # 이미지별 저장 및 CSV 기록
-                for img in images:
-                    url = img.get('uri')
-                    ext = os.path.splitext(url)[1]
+            title    = rel.get('title', '')
+            released = rel.get('released', '')
+            year     = rel.get('year', '')
+            country  = rel.get('country', '')
+            genres   = ';'.join(rel.get('genres', []))
+            styles   = ';'.join(rel.get('styles', []))
+            images   = rel.get('images', [])
 
-                    # prefix에 숫자 suffix 붙이기
-                    existing = [f for f in os.listdir(DOWNLOAD_DIR)
-                                if f.startswith(base_name + '_') and f.endswith(ext)]
-                    count = len(existing) + 1
-                    fname = f"{base_name}_{count:02d}{ext}"
-                    out = os.path.join(DOWNLOAD_DIR, fname)
+            base_name = sanitize_title(title or str(rid))
 
-                    try:
-                        download_image(url, out)
-                        logger.info(f"Downloaded image: {fname}")
-                    except Exception as e:
-                        logger.error(f"Error downloading {url}: {e}")
-                        continue
+            for img in images:
+                url = img.get('uri')
+                if url in seen_urls:
+                    continue
+                seen_urls.add(url)
 
-                    # CSV 기록
-                    writer.writerow([artist, album, rid, title, year, genres, styles, url, fname])
-                    csvfile.flush()
+                image_counter += 1
+                if image_counter > MAX_IMAGES:
+                    logger.info(f"Reached {MAX_IMAGES} images for '{query}', moving to next query.")
+                    return
 
-                    time.sleep(1)
+                ext = os.path.splitext(url)[1]
+                fname = f"{base_name}_{image_counter:04d}{ext}"
+                out = os.path.join(dest_folder, fname)
 
-            time.sleep(1)
+                try:
+                    download_image(url, out)
+                    logger.info(f"Downloaded image: {fname}")
+                except Exception as e:
+                    logger.error(f"Error downloading {url}: {e}")
+                    continue
+
+                csv_writer.writerow([
+                    query.split(' ', 1)[0],
+                    query.split(' ', 1)[1] if ' ' in query else '',
+                    rid,
+                    title,
+                    released,
+                    year,
+                    country,
+                    genres,
+                    styles,
+                    url,
+                    fname
+                ])
+                csvfile.flush()
+                time.sleep(1)
+
+        time.sleep(1)
+
+# 10) 메인 실행부
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description="Discogs 커버 아트 다운로드 (50개 제한)")
+    parser.add_argument(
+        '--query', help="검색할 앨범 (예: 'Artist Album')"
+    )
+    parser.add_argument(
+        '--dest', default=DISCOGS_DIR,
+        help=f"이미지 저장 폴더 (기본: {DISCOGS_DIR})"
+    )
+    args = parser.parse_args()
+
+    # CSV append 모드 설정
+    header_needed = not os.path.exists(CSV_PATH) or os.path.getsize(CSV_PATH) == 0
+    mode = 'a' if os.path.exists(CSV_PATH) else 'w'
+    with open(CSV_PATH, mode, newline='', encoding='utf-8') as csvfile:
+        csv_writer = csv.writer(csvfile)
+        if header_needed:
+            csv_writer.writerow([
+                'artist', 'album', 'release_id', 'title', 'released',
+                'year', 'country', 'genres', 'styles', 'image_url', 'image_file'
+            ])
+
+        tasks = []
+        if args.query:
+            artist, album = (args.query.split(' ', 1) + [''])[:2]
+            tasks.append({'artist': artist, 'album': album})
+        else:
+            tasks = ALBUM_QUERIES
+
+        for q in tasks:
+            query_str = f"{q['artist']} {q['album']}".strip()
+            logger.info(f"Processing: {query_str}")
+            download_with_rest(query_str, args.dest, csv_writer, csvfile)
+
+    logger.info("모든 작업이 완료되었습니다.")
