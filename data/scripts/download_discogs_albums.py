@@ -117,9 +117,19 @@ if __name__ == '__main__':
 
             for result in results:
                 rid = result.get('id')
-                rel_resp = requests.get(f'https://api.discogs.com/releases/{rid}',
-                                         headers={'User-Agent': UA})
-                rel_resp.raise_for_status()
+                # 릴리즈 상세 조회 시 404 예외 처리
+                try:
+                    rel_resp = requests.get(f'https://api.discogs.com/releases/{rid}',
+                                             headers={'User-Agent': UA})
+                    rel_resp.raise_for_status()
+                except requests.exceptions.HTTPError as e:
+                    if rel_resp.status_code == 404:
+                        logger.warning(f"Release ID {rid} not found (404), skipping.")
+                        continue
+                    else:
+                        logger.error(f"Error fetching release {rid}: {e}")
+                        continue
+
                 rel = rel_resp.json()
 
                 title = rel.get('title', '')
