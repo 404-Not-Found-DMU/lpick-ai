@@ -26,8 +26,9 @@ import torch
 from transformers import CLIPProcessor, CLIPModel
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 # FastAPI 앱 생성
@@ -138,14 +139,31 @@ async def startup_event():
 
 # API 엔드포인트
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    """루트 엔드포인트"""
+    """웹 UI 메인 페이지"""
+    html_file = Path("templates/image_search.html")
+    if html_file.exists():
+        with open(html_file, 'r', encoding='utf-8') as f:
+            return f.read()
+    return """
+    <html>
+        <body>
+            <h1>LP Album Image Search API</h1>
+            <p>API Documentation: <a href="/docs">/docs</a></p>
+        </body>
+    </html>
+    """
+
+@app.get("/api")
+async def api_info():
+    """API 정보"""
     return {
         "service": "LP Album Image Search API",
         "version": "1.0.0",
         "status": "running",
         "endpoints": {
+            "web_ui": "GET /",
             "search_image": "POST /search/image",
             "search_text": "POST /search/text",
             "get_metadata": "GET /metadata/{image_id}",
