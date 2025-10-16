@@ -1,9 +1,11 @@
 # 🚀 이미지 검색 시스템 구축 진행 상황
 
 ## 📅 프로젝트 시작일
+
 2024년 10월 16일
 
 ## 📊 전체 진행률
+
 ```
 ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░ 60% (3/8 단계 완료)
 ```
@@ -13,6 +15,7 @@
 ### 1단계: 데이터 전처리 및 분석 ✅ (2024-10-16 09:30 완료)
 
 **수행 작업:**
+
 - [x] 크롤링된 이미지 데이터 현황 분석 스크립트 작성
 - [x] 장르별 이미지 개수 통계
 - [x] 이미지 크기/해상도 분포 분석
@@ -22,6 +25,7 @@
 - [x] 종합 분석 리포트 생성
 
 **주요 결과:**
+
 - 총 이미지: **86,171개**
 - 손상된 이미지: **0개** (100% 깨끗한 데이터!)
 - 14개 장르로 분류
@@ -30,6 +34,7 @@
 - 모든 이미지가 RGB 모드
 
 **생성된 파일:**
+
 - `data/analysis_results/data_analysis_visualization.png` - 9개 전문가 수준 그래프
 - `data/analysis_results/analysis_report.txt` - 종합 분석 리포트
 - `data/analysis_results/analysis_report.json` - JSON 형식 리포트
@@ -37,6 +42,7 @@
 - `data/analysis_results/metadata_statistics.json` - 메타데이터 통계
 
 **사용 스크립트:**
+
 - `tools/analysis/analyze_crawled_data.py`
 
 **소요 시간:** 약 1시간
@@ -46,6 +52,7 @@
 ### 2단계: 이미지 임베딩 모델 선택 및 테스트 ✅ (2024-10-16 10:00 완료)
 
 **수행 작업:**
+
 - [x] 이미지 임베딩 모델 비교 분석 (CLIP vs ResNet50)
 - [x] 모델 다운로드 및 환경 설정
 - [x] 샘플 이미지 15개로 임베딩 생성 테스트
@@ -54,6 +61,7 @@
 - [x] 비교 차트 생성
 
 **주요 결과:**
+
 - **최종 선택: CLIP (OpenAI)** ⭐
 - CLIP 처리 속도: 0.0568초/이미지
 - ResNet50 처리 속도: 0.0392초/이미지 (1.45배 빠름)
@@ -61,18 +69,21 @@
 - 전체 86,171개 이미지 처리 예상: 약 1.4시간 (CPU 기준)
 
 **CLIP 선택 이유:**
+
 1. ✅ 이미지 + 텍스트 검색 모두 가능 (멀티모달)
 2. ✅ "jazz album", "rock cover" 같은 자연어 검색 지원
 3. ✅ 효율적인 512차원 임베딩
 4. ✅ 허용 가능한 처리 속도
 
 **생성된 파일:**
+
 - `data/analysis_results/model_selection_results.json` - 실험 결과
 - `data/analysis_results/model_comparison_chart.png` - 비교 그래프
 - `scripts/model_selection_experiment.py` - 실험 스크립트
 - `logs/model_selection_*.log` - 실행 로그
 
 **사용 기술:**
+
 - PyTorch, Transformers (Hugging Face)
 - CLIP: openai/clip-vit-base-patch32
 
@@ -83,6 +94,7 @@
 ### 3단계: 전체 이미지 임베딩 생성 ✅ (2024-10-16 10:39 완료)
 
 **수행 작업:**
+
 - [x] 배치 임베딩 생성 스크립트 작성
   - 배치 크기: 32
   - 진행상황 실시간 표시 (tqdm)
@@ -94,6 +106,7 @@
 - [x] 메타데이터 매핑 파일 생성
 
 **주요 결과:**
+
 - ✅ 처리된 이미지: **86,171개** (100% 완료!)
 - ✅ 임베딩 파일 크기: **168MB**
 - ✅ 실제 소요 시간: **36.2분** (예상보다 2.3배 빠름!)
@@ -101,12 +114,14 @@
 - ✅ Device: CPU (M 시리즈 칩 최적화)
 
 **생성된 파일:**
+
 - `data/processed/embeddings/clip_embeddings.npy` - 168MB (86,171 × 512 벡터)
 - `data/processed/embeddings/metadata_mapping.json` - 14MB (이미지 정보)
 - `data/processed/embeddings/embedding_info.json` - 생성 메타데이터
 - `data/processed/embeddings/embedding_summary.json` - 장르별 통계
 
 **장르별 임베딩 분포:**
+
 - Pop: 10,000개
 - Jazz: 8,111개
 - Classical: 7,000개
@@ -123,9 +138,11 @@
 - Hip: 1,404개
 
 **사용 스크립트:**
+
 - `scripts/generate_embeddings.py`
 
 **사용 기술:**
+
 - CLIP (openai/clip-vit-base-patch32)
 - PyTorch, NumPy
 - 배치 처리 + 체크포인트 시스템
@@ -139,6 +156,7 @@
 ### 4단계: FAISS 벡터 검색 인덱스 구축 🔍 (진행 예정)
 
 **계획된 작업:**
+
 - [ ] FAISS 라이브러리 설치 및 설정
 - [ ] 임베딩 벡터를 FAISS 인덱스로 변환
 - [ ] 인덱스 타입 선택 (IndexFlatL2 vs IndexIVFFlat)
@@ -152,18 +170,22 @@
 ## ⏳ 대기 중인 단계
 
 ### 5단계: 검색 API 개발 🌐
+
 - 상태: 대기 중
 - 예상 시간: 2-3시간
 
 ### 6단계: 웹 UI 개발 🎨
+
 - 상태: 대기 중
 - 예상 시간: 3-4시간
 
 ### 7단계: 테스트 및 최적화 ⚡
+
 - 상태: 대기 중
 - 예상 시간: 2-3시간
 
 ### 8단계: 배포 및 문서화 📚
+
 - 상태: 대기 중
 - 예상 시간: 2-3시간
 
@@ -211,14 +233,17 @@ lpick-ai/
 ## 🎯 현재 상태 요약
 
 ### 완료된 작업 (3/8 단계) - 60%
+
 1. ✅ 데이터 분석 완료 - 86,171개 이미지 확인
 2. ✅ 모델 선택 완료 - CLIP 선택 결정
 3. ✅ 임베딩 생성 완료 - 168MB 벡터 데이터 생성
 
 ### 다음 작업
+
 4. 🔄 FAISS 인덱스 구축 시작
 
 ### 주요 마일스톤
+
 - [x] 데이터 품질 확인
 - [x] 임베딩 모델 선택
 - [x] 임베딩 생성 (완료: 36.2분)
@@ -232,24 +257,29 @@ lpick-ai/
 ## 📝 기술 스택 확정
 
 ### 데이터 처리
+
 - **이미지 분석:** PIL, matplotlib, seaborn
 - **메타데이터:** pandas, numpy
 
 ### 임베딩 모델
+
 - **선택된 모델:** CLIP (openai/clip-vit-base-patch32) ✅
 - **프레임워크:** PyTorch, Transformers
 - **임베딩 차원:** 512
 - **처리 속도:** 39.68 images/sec (CPU)
 
 ### 검색 엔진 (진행 예정)
+
 - **벡터 검색:** FAISS (Facebook AI)
 - **인덱스 타입:** IndexFlatL2 또는 IndexIVFFlat
 
 ### API 서버 (예정)
+
 - **프레임워크:** FastAPI
 - **비동기 처리:** asyncio
 
 ### 웹 UI (예정)
+
 - **프론트엔드:** HTML/CSS/JavaScript
 - **스타일:** Responsive Design
 
@@ -258,17 +288,20 @@ lpick-ai/
 ## 📊 성능 지표
 
 ### 데이터셋
+
 - 총 이미지: 86,171개
 - 손상률: 0%
 - 데이터 품질: 우수
 
 ### 처리 성능
+
 - 임베딩 생성 속도: 39.68 images/sec (CPU)
 - 실제 처리 시간: 36.2분 (예상 84분보다 57% 단축!)
 - 임베딩 파일 크기: 168MB
 - 메타데이터 크기: 14MB
 
 ### 예상 검색 성능 (4단계 후)
+
 - 검색 시간: < 100ms (FAISS 사용 시)
 - Top-K 결과: K=10~20
 - 동시 사용자: ~100 (최적화 후)
@@ -295,16 +328,19 @@ lpick-ai/
 ## 🎯 주요 성과
 
 ### 1단계 성과
+
 - 📊 9개의 전문가 수준 분석 그래프
 - 📄 상세 분석 리포트 (TXT + JSON)
 - 📋 86,213개 레코드의 통합 메타데이터
 
 ### 2단계 성과
+
 - 🤖 CLIP 모델 선택 및 검증
 - 📈 모델 비교 실험 결과
 - ⚡ 처리 속도 벤치마크
 
 ### 3단계 성과 (방금 완료!)
+
 - 💾 168MB 임베딩 벡터 생성
 - 🎯 86,171개 이미지 100% 처리
 - ⚡ 예상보다 2.3배 빠른 처리 (36분 vs 84분)
@@ -326,12 +362,14 @@ lpick-ai/
 ## 💡 다음 단계 미리보기
 
 ### 4단계: FAISS 인덱스 구축 (다음)
+
 1. FAISS 설치
 2. 168MB 임베딩을 인덱스로 변환
 3. 검색 성능 테스트
 4. 인덱스 저장
 
 **예상 작업:**
+
 ```python
 # 86,171개 벡터 인덱싱
 index = faiss.IndexFlatL2(512)
