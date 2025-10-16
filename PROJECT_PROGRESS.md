@@ -7,7 +7,7 @@
 ## 📊 전체 진행률
 
 ```
-▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░ 60% (3/8 단계 완료)
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░ 75% (4/8 단계 완료)
 ```
 
 ## ✅ 완료된 단계
@@ -151,19 +151,75 @@
 
 ---
 
+### 4단계: FAISS 벡터 검색 인덱스 구축 ✅ (2024-10-16 10:46 완료)
+
+**수행 작업:**
+
+- [x] FAISS 라이브러리 설치 (faiss-cpu)
+- [x] 임베딩 벡터를 FAISS 인덱스로 변환
+- [x] 2가지 인덱스 타입 구축
+  - IndexFlatL2 (정확도 우선)
+  - IndexIVFFlat (속도 우선)
+- [x] 검색 성능 벤치마크 (100개 쿼리)
+- [x] 인덱스 저장 및 메타데이터 매핑
+
+**주요 결과:**
+
+- ✅ IndexFlatL2 빌드: **0.15초**
+- ✅ IndexIVFFlat 빌드: **0.31초**
+- ✅ 검색 성능:
+  - IndexFlatL2: **4.53ms** (정확도 100%) ⭐ 권장
+  - IndexIVFFlat (nprobe=1): **0.13ms** (가장 빠름)
+  - IndexIVFFlat (nprobe=10): **0.55ms** (속도-정확도 균형)
+
+**선택된 인덱스:**
+
+- **IndexFlatL2** ⭐ 최종 선택
+- 이유: 86,171개는 10만 개 미만, 4.53ms 충분히 빠름
+- 100% 정확한 검색 보장
+
+**생성된 파일:**
+
+- `data/processed/faiss_index/index_flat_l2.faiss` - 168MB (메인 인덱스)
+- `data/processed/faiss_index/index_ivf_flat.faiss` - 169MB (백업)
+- `data/processed/faiss_index/id_to_metadata_mapping.json` - 14MB
+- `data/processed/faiss_index/index_info.json` - 인덱스 정보
+
+**검색 테스트 결과:**
+
+- Top-10 검색 성공
+- 같은 앨범의 다른 이미지 정확히 검색
+- 유사한 장르/스타일 이미지 검색 확인
+
+**사용 스크립트:**
+
+- `scripts/build_faiss_index.py`
+
+**사용 기술:**
+
+- FAISS (Facebook AI Similarity Search)
+- IndexFlatL2 (L2 거리 기반 정확 검색)
+- IndexIVFFlat (클러스터 기반 근사 검색)
+
+**실제 소요 시간:** 약 6분 (예상 10-20분보다 빠름!)
+
+---
+
 ## 🔄 진행 중인 단계
 
-### 4단계: FAISS 벡터 검색 인덱스 구축 🔍 (진행 예정)
+### 5단계: 검색 API 개발 🌐 (진행 예정)
 
 **계획된 작업:**
 
-- [ ] FAISS 라이브러리 설치 및 설정
-- [ ] 임베딩 벡터를 FAISS 인덱스로 변환
-- [ ] 인덱스 타입 선택 (IndexFlatL2 vs IndexIVFFlat)
-- [ ] 인덱스 저장 및 로드 테스트
-- [ ] 검색 성능 벤치마크 (Top-K 검색 속도)
+- [ ] FastAPI 서버 구조 설계
+- [ ] API 엔드포인트 구현
+  - POST /search/image - 이미지 업로드 검색
+  - POST /search/text - 텍스트 기반 검색
+  - GET /image/{image_id} - 메타데이터 조회
+- [ ] 검색 결과 포맷팅
+- [ ] 에러 핸들링 및 로깅
 
-**예상 시간:** 10-20분
+**예상 시간:** 2-3시간
 
 ---
 
@@ -209,7 +265,11 @@ lpick-ai/
 │   │   ├── metadata_mapping.json (14MB) ✅
 │   │   ├── embedding_info.json ✅
 │   │   └── embedding_summary.json ✅
-│   ├── processed/faiss_index/    🔄 FAISS 인덱스 (4단계 진행 예정)
+│   ├── processed/faiss_index/    ✅ FAISS 인덱스 (4단계 완료!)
+│   │   ├── index_flat_l2.faiss (168MB) ✅
+│   │   ├── index_ivf_flat.faiss (169MB) ✅
+│   │   ├── id_to_metadata_mapping.json (14MB) ✅
+│   │   └── index_info.json ✅
 │   └── processed/preprocessed_images/ ⏳
 │
 ├── tools/
@@ -220,7 +280,8 @@ lpick-ai/
 ├── scripts/                      ✅ 실행 스크립트
 │   ├── model_selection_experiment.py ✅
 │   ├── generate_embeddings.py ✅
-│   └── (다음: build_faiss_index.py 생성 예정)
+│   ├── build_faiss_index.py ✅
+│   └── (다음: search_api.py 생성 예정)
 │
 ├── models/                       🔄 모델 관련
 ├── src/api/                      ⏳ API 서버 (5단계)
@@ -232,23 +293,24 @@ lpick-ai/
 
 ## 🎯 현재 상태 요약
 
-### 완료된 작업 (3/8 단계) - 60%
+### 완료된 작업 (4/8 단계) - 75%
 
 1. ✅ 데이터 분석 완료 - 86,171개 이미지 확인
 2. ✅ 모델 선택 완료 - CLIP 선택 결정
 3. ✅ 임베딩 생성 완료 - 168MB 벡터 데이터 생성
+4. ✅ FAISS 인덱스 완료 - 4.53ms 검색 속도
 
 ### 다음 작업
 
-4. 🔄 FAISS 인덱스 구축 시작
+5. 🔄 검색 API 개발 시작
 
 ### 주요 마일스톤
 
 - [x] 데이터 품질 확인
 - [x] 임베딩 모델 선택
 - [x] 임베딩 생성 (완료: 36.2분)
-- [ ] 검색 엔진 구축 (진행 예정)
-- [ ] API 서버 구축
+- [x] 검색 엔진 구축 (완료: 6분)
+- [ ] API 서버 구축 (진행 예정)
 - [ ] 웹 UI 구축
 - [ ] 배포
 
@@ -268,10 +330,12 @@ lpick-ai/
 - **임베딩 차원:** 512
 - **처리 속도:** 39.68 images/sec (CPU)
 
-### 검색 엔진 (진행 예정)
+### 검색 엔진
 
-- **벡터 검색:** FAISS (Facebook AI)
-- **인덱스 타입:** IndexFlatL2 또는 IndexIVFFlat
+- **벡터 검색:** FAISS (Facebook AI) ✅
+- **인덱스 타입:** IndexFlatL2 (선택됨) ✅
+- **검색 속도:** 4.53ms (Top-10)
+- **정확도:** 100% (Exact search)
 
 ### API 서버 (예정)
 
@@ -314,14 +378,14 @@ lpick-ai/
 1. 데이터 분석     ████████████████████ 100% ✅ (1시간)
 2. 모델 선택       ████████████████████ 100% ✅ (1시간)
 3. 임베딩 생성     ████████████████████ 100% ✅ (36분)
-4. FAISS 인덱스    ░░░░░░░░░░░░░░░░░░░░   0% 🔄 (예상: 10-20분)
-5. API 개발        ░░░░░░░░░░░░░░░░░░░░   0% ⏳ (예상: 2-3시간)
+4. FAISS 인덱스    ████████████████████ 100% ✅ (6분)
+5. API 개발        ░░░░░░░░░░░░░░░░░░░░   0% 🔄 (예상: 2-3시간)
 6. 웹 UI           ░░░░░░░░░░░░░░░░░░░░   0% ⏳ (예상: 3-4시간)
 7. 테스트/최적화   ░░░░░░░░░░░░░░░░░░░░   0% ⏳ (예상: 2-3시간)
 8. 배포/문서화     ░░░░░░░░░░░░░░░░░░░░   0% ⏳ (예상: 2-3시간)
 ```
 
-**총 소요 시간:** 2시간 36분 / 예상 14-23시간
+**총 소요 시간:** 2시간 42분 / 예상 14-23시간
 
 ---
 
@@ -339,12 +403,20 @@ lpick-ai/
 - 📈 모델 비교 실험 결과
 - ⚡ 처리 속도 벤치마크
 
-### 3단계 성과 (방금 완료!)
+### 3단계 성과
 
 - 💾 168MB 임베딩 벡터 생성
 - 🎯 86,171개 이미지 100% 처리
 - ⚡ 예상보다 2.3배 빠른 처리 (36분 vs 84분)
 - 🔄 체크포인트 시스템 (중단 시 재시작 가능)
+
+### 4단계 성과 (방금 완료!)
+
+- 🔍 FAISS 인덱스 2종 구축 (Flat + IVF)
+- ⚡ 초고속 빌드 (0.15초 + 0.31초)
+- 🎯 검색 성능: 4.53ms (실시간 검색 가능!)
+- 📊 벤치마크: 4가지 nprobe 설정 테스트
+- 💾 인덱스 파일: 168MB + 169MB
 
 ---
 
@@ -356,6 +428,7 @@ lpick-ai/
 - [데이터 분석 리포트](data/analysis_results/analysis_report.txt)
 - [모델 선택 결과](data/analysis_results/model_selection_results.json)
 - [임베딩 생성 정보](data/processed/embeddings/embedding_info.json)
+- [FAISS 인덱스 정보](data/processed/faiss_index/index_info.json)
 
 ---
 
